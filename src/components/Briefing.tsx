@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { SequenceShell } from "./SequenceShell";
 import { useStore } from "../store";
-import { requestBriefing, hasKey } from "../lib/claude";
+import { requestBriefing, hasCredentials } from "../lib/claude";
 import { SEED_BRIEFING } from "../lib/grounding";
 import type { BriefingItem } from "../types";
 
@@ -56,7 +56,7 @@ export function Briefing({
       setItems(cache.items);
       return;
     }
-    if (!hasKey(data.settings)) {
+    if (!hasCredentials(data.settings)) {
       setItems(SEED_BRIEFING);
       return;
     }

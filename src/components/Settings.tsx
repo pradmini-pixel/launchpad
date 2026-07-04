@@ -1,6 +1,8 @@
 import { useStore } from "../store";
-import { DEFAULT_MODEL } from "../lib/storage";
-import type { ThemeMode } from "../types";
+import { PROVIDER_PRESETS } from "../lib/storage";
+import type { Provider, ThemeMode } from "../types";
+
+const PROVIDERS = Object.keys(PROVIDER_PRESETS) as Provider[];
 
 const THEMES: { key: ThemeMode; label: string }[] = [
   { key: "auto", label: "Auto" },
@@ -34,9 +36,17 @@ function Toggle({
 export function Settings({ onClose }: { onClose: () => void }) {
   const { data, updateSettings } = useStore();
   const s = data.settings;
+  const preset = PROVIDER_PRESETS[s.provider];
 
   function setAbout(patch: Partial<typeof s.about>) {
     updateSettings({ about: { ...s.about, ...patch } });
+  }
+
+  // Switching provider seeds its base URL and model, so the common case is
+  // one tap. The user can still override either field afterward.
+  function selectProvider(p: Provider) {
+    const next = PROVIDER_PRESETS[p];
+    updateSettings({ provider: p, baseUrl: next.baseUrl, model: next.model });
   }
 
   function setReminder(value: string) {
@@ -101,32 +111,66 @@ export function Settings({ onClose }: { onClose: () => void }) {
 
         <hr className="hairline" />
 
-        {/* Claude API — local-first, key stays on this device. */}
+        {/* AI provider — local-first, key stays on this device. */}
         <div className="stack stack--md">
-          <p className="eyebrow">Claude</p>
+          <p className="eyebrow">Coaching engine</p>
+
           <div className="slot">
-            <span className="slot__label">API key</span>
-            <input
-              className="field field--line"
-              type="password"
-              placeholder="sk-ant-… (stored only on this device)"
-              value={s.apiKey}
-              onChange={(e) => updateSettings({ apiKey: e.target.value })}
-              autoComplete="off"
-            />
-            <span className="caption">
-              Without a key, DayOne runs fully offline with local coaching and a sample briefing.
-            </span>
+            <span className="slot__label">Provider</span>
+            <div className="seg" style={{ flexWrap: "wrap" }}>
+              {PROVIDERS.map((p) => (
+                <button
+                  key={p}
+                  className={"seg__opt" + (s.provider === p ? " seg__opt--on" : "")}
+                  onClick={() => selectProvider(p)}
+                >
+                  {PROVIDER_PRESETS[p].label}
+                </button>
+              ))}
+            </div>
+            <span className="caption">{PROVIDER_PRESETS[s.provider].note}</span>
           </div>
+
+          {preset.needsKey ? (
+            <div className="slot">
+              <span className="slot__label">API key</span>
+              <input
+                className="field field--line"
+                type="password"
+                placeholder="Stored only on this device"
+                value={s.apiKey}
+                onChange={(e) => updateSettings({ apiKey: e.target.value })}
+                autoComplete="off"
+              />
+            </div>
+          ) : null}
+
+          {s.provider !== "anthropic" ? (
+            <div className="slot">
+              <span className="slot__label">Base URL</span>
+              <input
+                className="field field--line"
+                placeholder="https://…/v1"
+                value={s.baseUrl}
+                onChange={(e) => updateSettings({ baseUrl: e.target.value })}
+              />
+            </div>
+          ) : null}
+
           <div className="slot">
             <span className="slot__label">Model</span>
             <input
               className="field field--line"
-              placeholder={DEFAULT_MODEL}
+              placeholder={preset.model}
               value={s.model}
-              onChange={(e) => updateSettings({ model: e.target.value || DEFAULT_MODEL })}
+              onChange={(e) => updateSettings({ model: e.target.value })}
             />
           </div>
+
+          <span className="caption">
+            With nothing configured, DayOne runs fully offline with local coaching and a sample
+            briefing.
+          </span>
         </div>
 
         <hr className="hairline" />

@@ -1,15 +1,53 @@
-import type { AppData, Settings } from "../types";
+import type { AppData, Provider, Settings } from "../types";
 
 // Local-first persistence. Everything lives in one localStorage key so history,
 // streaks, and settings survive across mornings on the same device.
 
 const KEY = "dayone.v1";
 
-export const DEFAULT_MODEL = "claude-opus-4-8";
+/** Per-provider defaults, applied when the user switches provider in Settings. */
+export const PROVIDER_PRESETS: Record<
+  Provider,
+  { label: string; baseUrl: string; model: string; needsKey: boolean; note: string }
+> = {
+  groq: {
+    label: "Groq (free)",
+    // Routed through the Vite dev proxy (see vite.config.ts) to avoid CORS.
+    baseUrl: "/groq/openai/v1",
+    model: "llama-3.3-70b-versatile",
+    needsKey: true,
+    note: "Free API key from console.groq.com. Fast, no card required.",
+  },
+  anthropic: {
+    label: "Claude (Anthropic)",
+    baseUrl: "",
+    model: "claude-opus-4-8",
+    needsKey: true,
+    note: "Pay-as-you-go key from console.anthropic.com.",
+  },
+  ollama: {
+    label: "Ollama (local)",
+    baseUrl: "http://localhost:11434/v1",
+    model: "llama3.1",
+    needsKey: false,
+    note: "Runs entirely on your machine. No key, no cost. Start Ollama first.",
+  },
+  openai: {
+    label: "OpenAI-compatible",
+    baseUrl: "",
+    model: "",
+    needsKey: true,
+    note: "Any OpenAI-style /chat/completions endpoint. Set the base URL and model.",
+  },
+};
+
+export const DEFAULT_MODEL = PROVIDER_PRESETS.groq.model;
 
 export const DEFAULT_SETTINGS: Settings = {
+  provider: "groq",
   apiKey: "",
-  model: DEFAULT_MODEL,
+  baseUrl: PROVIDER_PRESETS.groq.baseUrl,
+  model: PROVIDER_PRESETS.groq.model,
   about: {
     name: "",
     role: "Senior manager leading an HR Technology team (Workday integrations, Extend, UiPath RPA)",

@@ -46,28 +46,42 @@ npm run build    # typecheck + production build
 Mobile-first — it's built to be opened on a phone with morning coffee, and it's
 beautiful on desktop.
 
-## AI integration & the key
+## AI integration & providers
 
 DayOne is **local-first**. All history, streaks, and settings live in
-`localStorage`; nothing leaves the device except the Claude API calls.
+`localStorage`; nothing leaves the device except the AI calls you configure.
 
-The Anthropic API powers four things: the CBT reframe, the voice-rep coaching,
-the daily drill generation (tuned to your role via the "About me" block in
-Settings), and the web-search-backed Briefing. It uses `claude-opus-4-8` by
-default and the `web_search` server tool for the Briefing.
+Four surfaces use AI: the CBT reframe, the voice-rep coaching, the daily drill
+(tuned to your role via the "About me" block in Settings), and the Briefing.
+You pick the backend in **Settings → Coaching engine**:
 
-Because this is a single-user personal app, the key is kept in a local config:
-you paste it into **Settings**, it's stored in `localStorage`, and calls are
-made directly from the browser (`dangerouslyAllowBrowser`). That keeps DayOne a
-true single-`npm run dev` app with no server to run. The tradeoff is that the
-key lives in the browser — fine for a personal device, not for a shared deploy.
+| Provider | Cost | Key | Live briefing? |
+|---|---|---|---|
+| **Groq** (default) | Free | Free key at [console.groq.com](https://console.groq.com) | Yes — via Groq's `compound` web-search model |
+| **Claude (Anthropic)** | Pay-as-you-go | [console.anthropic.com](https://console.anthropic.com) | Yes — `web_search` server tool |
+| **Ollama (local)** | Free | None | No (uses the sample briefing) |
+| **OpenAI-compatible** | Varies | Your provider | No (uses the sample briefing) |
 
-**Everything works with zero configuration.** With no key, DayOne runs fully
-offline: heuristic reframe and coaching, a rotating local drill, and a seed
-briefing. Add a key and those same surfaces light up with tailored Claude
-responses. Every API call has a timeout and a graceful fallback — the Briefing
-in particular falls back to yesterday's cached cards with a subtle "refreshed
-yesterday" note, and never shows a broken screen.
+Choosing a provider fills in its base URL and a default model; both stay
+editable. Good free Groq models: `llama-3.3-70b-versatile` (default),
+`openai/gpt-oss-20b` (lighter), `moonshotai/kimi-k2-instruct`.
+
+The key is kept in a local config: you paste it into Settings, it's stored in
+`localStorage`, and calls are made from the browser — keeping DayOne a true
+single-`npm run dev` app with no server to run. The tradeoff is that the key
+lives in the browser: fine for a personal device, not for a shared deploy.
+
+**Groq and CORS.** Browsers can't call `api.groq.com` directly, so the Vite dev
+server proxies `/groq/*` to Groq (see `vite.config.ts`). Your key is forwarded
+untouched; nothing is stored server-side. This works under `npm run dev`; a
+static production host would need its own proxy.
+
+**Everything works with zero configuration.** With nothing set up, DayOne runs
+fully offline: heuristic reframe and coaching, a rotating local drill, and a
+seed briefing. Add a provider and those surfaces light up with tailored
+responses. Every call has a timeout and a graceful fallback — the Briefing in
+particular falls back to yesterday's cached cards (or the seed) with a subtle
+"refreshed yesterday" note, and never shows a broken screen.
 
 ## Architecture
 
@@ -76,8 +90,9 @@ yesterday" note, and never shows a broken screen.
   completion. Fully unit-tested (`sequenceEngine.test.ts`).
 - `src/lib/streak.ts` — gentle streak math (a miss erodes by one, never resets
   to zero). Unit-tested.
-- `src/lib/claude.ts` — thin typed client: reframe, coaching, drill generation,
-  briefing — each with a timeout and a local fallback.
+- `src/lib/claude.ts` — provider-agnostic typed client (Claude SDK or any
+  OpenAI-compatible endpoint): reframe, coaching, drill generation, briefing —
+  each with a timeout and a local fallback.
 - `src/lib/storage.ts` — the single `localStorage` payload.
 - `src/store.tsx` — React context holding app data and the day's record.
 - `src/components/*` — one component per screen, plus `SequenceShell`,
