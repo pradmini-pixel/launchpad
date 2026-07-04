@@ -12,8 +12,10 @@ export const PROVIDER_PRESETS: Record<
 > = {
   groq: {
     label: "Groq (free)",
-    // Routed through the Vite dev proxy (see vite.config.ts) to avoid CORS.
-    baseUrl: "/groq/openai/v1",
+    // Local dev routes through the Vite proxy (see vite.config.ts). A static
+    // production build can set VITE_GROQ_BASE_URL to a Groq proxy (Cloudflare
+    // Worker) so the deployed app avoids CORS with no per-device setup.
+    baseUrl: import.meta.env.VITE_GROQ_BASE_URL || "/groq/openai/v1",
     model: "llama-3.3-70b-versatile",
     needsKey: true,
     note: "Free API key from console.groq.com. Fast, no card required.",

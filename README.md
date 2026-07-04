@@ -83,6 +83,30 @@ responses. Every call has a timeout and a graceful fallback — the Briefing in
 particular falls back to yesterday's cached cards (or the seed) with a subtle
 "refreshed yesterday" note, and never shows a broken screen.
 
+## Deploying (a public URL, from anywhere)
+
+The build is a static site (`base: "./"`), so it hosts anywhere. There's a
+`.github/workflows/deploy.yml` that publishes to **GitHub Pages** on every push
+to the app branch.
+
+**GitHub Pages** → `https://<user>.github.io/<repo>/`:
+
+1. Repo → **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+2. Push (or re-run the workflow). It builds and deploys automatically.
+
+Because GitHub Pages is static (no proxy) and Groq blocks direct browser calls,
+pick one for the AI on a Pages deploy:
+
+- **Groq (keep your key) via a free proxy** — deploy `workers/groq-proxy.js` as a
+  Cloudflare Worker (copy-paste, no CLI), then set a repo **variable**
+  `VITE_GROQ_BASE_URL` = `https://<your-worker>.workers.dev/openai/v1`. The build
+  bakes it in, so the deployed app reaches Groq on every device with no setup.
+- **Claude** — works directly from the browser, no proxy (pay-as-you-go).
+- **Ollama / offline** — offline coaching always works with nothing configured.
+
+**Netlify / Vercel** (`netlify.toml`, `vercel.json`) are also included; they
+proxy `/groq` server-side, so Groq works out of the box there with no Worker.
+
 ## Architecture
 
 - **React + Vite + TypeScript**, single-page, local-first.
