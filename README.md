@@ -74,19 +74,20 @@ never blocked and never shows a broken screen.
 ## Deploying (a public URL, from anywhere)
 
 The build is a static site (`base: "./"`), so it hosts anywhere with no server.
-`.github/workflows/deploy.yml` publishes to **GitHub Pages** on every push to
-the app branch.
+`.github/workflows/deploy.yml` builds and publishes `dist` to the **`gh-pages`**
+branch on every push to the app branch (via `peaceiris/actions-gh-pages`).
 
 **GitHub Pages** → `https://<user>.github.io/<repo>/`:
 
-1. Repo → **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-2. Push (or re-run the workflow). It builds and deploys automatically.
+1. Push the app branch — the workflow builds and updates `gh-pages`.
+2. Repo → **Settings → Pages → Build and deployment → Source: "Deploy from a
+   branch" → Branch: `gh-pages` → `/ (root)` → Save**.
 
-That's the whole deploy. The on-device default needs nothing else — the full
-ritual (breath, reframe, voice rep, briefing, focus, launch, streaks, weekly
-review) works on the live site with no key and no proxy. If you later want
-tailored AI on the hosted site, **Claude** works directly from the browser with
-no extra infrastructure.
+That's the whole deploy, and it's automatic thereafter. The on-device default
+needs nothing else — the full ritual (breath, reframe, voice rep, briefing,
+focus, launch, streaks, weekly review) works on the live site with no key and
+no proxy. If you later want tailored AI on the hosted site, **Claude** works
+directly from the browser with no extra infrastructure.
 
 ## Architecture
 

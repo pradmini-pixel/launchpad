@@ -75,7 +75,7 @@ async function openaiChat(
   settings: Settings,
   system: string,
   user: string,
-  opts: { json: boolean; timeout: number; model?: string },
+  opts: { json: boolean; timeout: number },
 ): Promise<string> {
   const ctrl = new AbortController();
   const id = setTimeout(() => ctrl.abort(), opts.timeout);
@@ -90,7 +90,7 @@ async function openaiChat(
           : {}),
       },
       body: JSON.stringify({
-        model: opts.model ?? settings.model,
+        model: settings.model,
         temperature: 0.6,
         max_tokens: 1024,
         ...(opts.json ? { response_format: { type: "json_object" } } : {}),
