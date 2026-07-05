@@ -10,23 +10,21 @@ import type {
 import { localReframe, localCoaching, SEED_BRIEFING } from "./grounding";
 import { localDrillForDay } from "./drills";
 
-// A provider-agnostic, typed wrapper around whichever AI backend is configured:
-// Claude (Anthropic SDK) or any OpenAI-compatible chat endpoint (Groq, a local
-// Ollama, or another OpenAI-style server). Every call has a timeout and a
-// graceful local fallback, so the ritual is never blocked and never shows a
-// broken screen. With no credentials we skip the network entirely.
+// A provider-agnostic, typed wrapper around whichever backend is configured:
+// on-device heuristics (the default), Claude (Anthropic SDK), or any
+// OpenAI-compatible chat endpoint (a local Ollama or another OpenAI-style
+// server). Every call has a timeout and a graceful local fallback, so the
+// ritual is never blocked and never shows a broken screen. With no credentials
+// we skip the network entirely and use the on-device heuristics.
 
 const REFRAME_TIMEOUT = 20_000;
 const COACH_TIMEOUT = 20_000;
 const DRILL_TIMEOUT = 20_000;
 const BRIEFING_TIMEOUT = 45_000;
 
-// Groq's agentic "compound" system has built-in web search — used for a live
-// briefing without a paid search tool.
-const GROQ_SEARCH_MODEL = "groq/compound-mini";
-
 /** Whether the configured provider has what it needs to make a call. */
 export function hasCredentials(settings: Settings): boolean {
+  if (settings.provider === "offline") return false;
   if (settings.provider === "ollama") return !!settings.baseUrl.trim();
   return settings.apiKey.trim().length > 0;
 }
@@ -71,7 +69,7 @@ function jsonFormat(schema: Record<string, unknown>) {
   return { format: { type: "json_schema" as const, schema } };
 }
 
-// --- OpenAI-compatible transport (Groq / Ollama / others) -----------------
+// --- OpenAI-compatible transport (Ollama / other OpenAI-style servers) -----
 
 async function openaiChat(
   settings: Settings,
@@ -325,17 +323,9 @@ export async function requestBriefing(
       { timeout: BRIEFING_TIMEOUT },
     );
     out = firstText(message);
-  } else if (settings.provider === "groq") {
-    // Groq's compound model browses the web; JSON mode isn't guaranteed there,
-    // so we parse tolerantly.
-    out = await openaiChat(settings, system, user, {
-      json: false,
-      timeout: BRIEFING_TIMEOUT,
-      model: GROQ_SEARCH_MODEL,
-    });
   } else {
-    // No reliable free web search on this provider — use the seed briefing
-    // rather than presenting model-invented "news" as real.
+    // Only Claude has a first-class web-search tool here — other providers use
+    // the seed briefing rather than presenting model-invented "news" as real.
     throw new Error("no web search for provider");
   }
 

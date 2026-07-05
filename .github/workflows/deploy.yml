@@ -26,11 +26,6 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-        env:
-          # Optional: set a repo variable VITE_GROQ_BASE_URL to your Groq proxy
-          # (Cloudflare Worker URL + /openai/v1) so the deployed app reaches Groq
-          # out of the box. Leave unset to use Claude / Ollama / offline instead.
-          VITE_GROQ_BASE_URL: ${{ vars.VITE_GROQ_BASE_URL }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

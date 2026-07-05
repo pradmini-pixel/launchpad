@@ -84,11 +84,12 @@ export interface AboutMe {
 export type ThemeMode = "auto" | "light" | "dark";
 
 /**
- * Which AI backend powers coaching. "anthropic" uses the Claude SDK directly;
- * the others are all OpenAI-compatible chat endpoints (Groq, a local Ollama, or
- * any other OpenAI-style server) reached over a shared fetch path.
+ * Which backend powers coaching. "offline" uses on-device heuristics only (the
+ * default — no key, no network). "anthropic" uses the Claude SDK directly; the
+ * rest are OpenAI-compatible chat endpoints (a local Ollama, or any OpenAI-style
+ * server) reached over a shared fetch path.
  */
-export type Provider = "groq" | "anthropic" | "ollama" | "openai";
+export type Provider = "offline" | "anthropic" | "ollama" | "openai";
 
 export interface Settings {
   provider: Provider;

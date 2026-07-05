@@ -145,7 +145,7 @@ export function Settings({ onClose }: { onClose: () => void }) {
             </div>
           ) : null}
 
-          {s.provider !== "anthropic" ? (
+          {s.provider === "ollama" || s.provider === "openai" ? (
             <div className="slot">
               <span className="slot__label">Base URL</span>
               <input
@@ -157,20 +157,17 @@ export function Settings({ onClose }: { onClose: () => void }) {
             </div>
           ) : null}
 
-          <div className="slot">
-            <span className="slot__label">Model</span>
-            <input
-              className="field field--line"
-              placeholder={preset.model}
-              value={s.model}
-              onChange={(e) => updateSettings({ model: e.target.value })}
-            />
-          </div>
-
-          <span className="caption">
-            With nothing configured, DayOne runs fully offline with local coaching and a sample
-            briefing.
-          </span>
+          {s.provider !== "offline" ? (
+            <div className="slot">
+              <span className="slot__label">Model</span>
+              <input
+                className="field field--line"
+                placeholder={preset.model}
+                value={s.model}
+                onChange={(e) => updateSettings({ model: e.target.value })}
+              />
+            </div>
+          ) : null}
         </div>
 
         <hr className="hairline" />

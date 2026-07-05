@@ -49,63 +49,44 @@ beautiful on desktop.
 ## AI integration & providers
 
 DayOne is **local-first**. All history, streaks, and settings live in
-`localStorage`; nothing leaves the device except the AI calls you configure.
+`localStorage`; nothing leaves the device unless you opt into an AI provider.
 
-Four surfaces use AI: the CBT reframe, the voice-rep coaching, the daily drill
-(tuned to your role via the "About me" block in Settings), and the Briefing.
-You pick the backend in **Settings → Coaching engine**:
+By default DayOne runs **fully on-device** — no key, no network, no setup. The
+reframe and voice-rep coaching use built-in heuristics, the drill rotates
+through a local pool, and the Briefing shows a curated sample. This is the mode
+that ships on GitHub Pages, and it needs nothing configured.
 
-| Provider | Cost | Key | Live briefing? |
+Four surfaces can be upgraded with a provider you pick in **Settings → Coaching
+engine**:
+
+| Provider | Cost | Works on a static host? | Live briefing? |
 |---|---|---|---|
-| **Groq** (default) | Free | Free key at [console.groq.com](https://console.groq.com) | Yes — via Groq's `compound` web-search model |
-| **Claude (Anthropic)** | Pay-as-you-go | [console.anthropic.com](https://console.anthropic.com) | Yes — `web_search` server tool |
-| **Ollama (local)** | Free | None | No (uses the sample briefing) |
-| **OpenAI-compatible** | Varies | Your provider | No (uses the sample briefing) |
+| **On-device** (default) | Free | Yes — nothing to configure | Sample briefing |
+| **Claude (Anthropic)** | Pay-as-you-go | Yes — calls the API directly from the browser | Yes — `web_search` |
+| **Ollama (local)** | Free | Only where Ollama runs | Sample briefing |
+| **OpenAI-compatible** | Varies | Depends on the endpoint's CORS | Sample briefing |
 
-Choosing a provider fills in its base URL and a default model; both stay
-editable. Good free Groq models: `llama-3.3-70b-versatile` (default),
-`openai/gpt-oss-20b` (lighter), `moonshotai/kimi-k2-instruct`.
-
-The key is kept in a local config: you paste it into Settings, it's stored in
-`localStorage`, and calls are made from the browser — keeping DayOne a true
-single-`npm run dev` app with no server to run. The tradeoff is that the key
-lives in the browser: fine for a personal device, not for a shared deploy.
-
-**Groq and CORS.** Browsers can't call `api.groq.com` directly, so the Vite dev
-server proxies `/groq/*` to Groq (see `vite.config.ts`). Your key is forwarded
-untouched; nothing is stored server-side. This works under `npm run dev`; a
-static production host would need its own proxy.
-
-**Everything works with zero configuration.** With nothing set up, DayOne runs
-fully offline: heuristic reframe and coaching, a rotating local drill, and a
-seed briefing. Add a provider and those surfaces light up with tailored
-responses. Every call has a timeout and a graceful fallback — the Briefing in
-particular falls back to yesterday's cached cards (or the seed) with a subtle
-"refreshed yesterday" note, and never shows a broken screen.
+Any key you enter is stored only in that browser's `localStorage` and sent
+directly to the provider — no server, no shared secret. Every call has a
+timeout and a graceful fallback to the on-device behaviour, so the ritual is
+never blocked and never shows a broken screen.
 
 ## Deploying (a public URL, from anywhere)
 
-The build is a static site (`base: "./"`), so it hosts anywhere. There's a
-`.github/workflows/deploy.yml` that publishes to **GitHub Pages** on every push
-to the app branch.
+The build is a static site (`base: "./"`), so it hosts anywhere with no server.
+`.github/workflows/deploy.yml` publishes to **GitHub Pages** on every push to
+the app branch.
 
 **GitHub Pages** → `https://<user>.github.io/<repo>/`:
 
 1. Repo → **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 2. Push (or re-run the workflow). It builds and deploys automatically.
 
-Because GitHub Pages is static (no proxy) and Groq blocks direct browser calls,
-pick one for the AI on a Pages deploy:
-
-- **Groq (keep your key) via a free proxy** — deploy `workers/groq-proxy.js` as a
-  Cloudflare Worker (copy-paste, no CLI), then set a repo **variable**
-  `VITE_GROQ_BASE_URL` = `https://<your-worker>.workers.dev/openai/v1`. The build
-  bakes it in, so the deployed app reaches Groq on every device with no setup.
-- **Claude** — works directly from the browser, no proxy (pay-as-you-go).
-- **Ollama / offline** — offline coaching always works with nothing configured.
-
-**Netlify / Vercel** (`netlify.toml`, `vercel.json`) are also included; they
-proxy `/groq` server-side, so Groq works out of the box there with no Worker.
+That's the whole deploy. The on-device default needs nothing else — the full
+ritual (breath, reframe, voice rep, briefing, focus, launch, streaks, weekly
+review) works on the live site with no key and no proxy. If you later want
+tailored AI on the hosted site, **Claude** works directly from the browser with
+no extra infrastructure.
 
 ## Architecture
 

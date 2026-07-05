@@ -10,22 +10,19 @@ export const PROVIDER_PRESETS: Record<
   Provider,
   { label: string; baseUrl: string; model: string; needsKey: boolean; note: string }
 > = {
-  groq: {
-    label: "Groq (free)",
-    // Local dev routes through the Vite proxy (see vite.config.ts). A static
-    // production build can set VITE_GROQ_BASE_URL to a Groq proxy (Cloudflare
-    // Worker) so the deployed app avoids CORS with no per-device setup.
-    baseUrl: import.meta.env.VITE_GROQ_BASE_URL || "/groq/openai/v1",
-    model: "llama-3.3-70b-versatile",
-    needsKey: true,
-    note: "Free API key from console.groq.com. Fast, no card required.",
+  offline: {
+    label: "On-device (free)",
+    baseUrl: "",
+    model: "",
+    needsKey: false,
+    note: "Runs entirely on your device — local coaching and a sample briefing. No key, no network.",
   },
   anthropic: {
     label: "Claude (Anthropic)",
     baseUrl: "",
     model: "claude-opus-4-8",
     needsKey: true,
-    note: "Pay-as-you-go key from console.anthropic.com.",
+    note: "Pay-as-you-go key from console.anthropic.com. Works directly from the browser.",
   },
   ollama: {
     label: "Ollama (local)",
@@ -43,13 +40,13 @@ export const PROVIDER_PRESETS: Record<
   },
 };
 
-export const DEFAULT_MODEL = PROVIDER_PRESETS.groq.model;
+const VALID_PROVIDERS = Object.keys(PROVIDER_PRESETS) as Provider[];
 
 export const DEFAULT_SETTINGS: Settings = {
-  provider: "groq",
+  provider: "offline",
   apiKey: "",
-  baseUrl: PROVIDER_PRESETS.groq.baseUrl,
-  model: PROVIDER_PRESETS.groq.model,
+  baseUrl: "",
+  model: "",
   about: {
     name: "",
     role: "Senior manager leading an HR Technology team (Workday integrations, Extend, UiPath RPA)",
@@ -78,16 +75,16 @@ export function loadData(): AppData {
     if (!raw) return freshData();
     const parsed = JSON.parse(raw) as Partial<AppData>;
     // Merge defensively so older/partial payloads still hydrate cleanly.
-    return {
-      ...freshData(),
-      ...parsed,
-      settings: {
-        ...DEFAULT_SETTINGS,
-        ...(parsed.settings ?? {}),
-        about: { ...DEFAULT_SETTINGS.about, ...(parsed.settings?.about ?? {}) },
-      },
-      days: parsed.days ?? {},
+    const settings = {
+      ...DEFAULT_SETTINGS,
+      ...(parsed.settings ?? {}),
+      about: { ...DEFAULT_SETTINGS.about, ...(parsed.settings?.about ?? {}) },
     };
+    // A payload from an older build may name a provider we no longer ship.
+    if (!VALID_PROVIDERS.includes(settings.provider)) {
+      settings.provider = "offline";
+    }
+    return { ...freshData(), ...parsed, settings, days: parsed.days ?? {} };
   } catch {
     return freshData();
   }
